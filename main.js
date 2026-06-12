@@ -673,13 +673,32 @@ function showFormStatus(type, msg) {
 // Interactive Map Loader (Leaflet.js open-source map)
 function initInteractiveMap() {
   const mapEl = document.getElementById('map');
-  if (!mapEl || typeof L === 'undefined') return;
+  if (!mapEl) return;
+
+  // Wait for Leaflet to load if needed (handles race conditions)
+  if (typeof L === 'undefined') {
+    setTimeout(initInteractiveMap, 100);
+    return;
+  }
+
+  // Prevent double initialization
+  if (mapEl._leaflet_id) return;
 
   try {
-    // Coordinates for Beylikdüzü OSB Birlik Sanayi Sitesi (41.0125, 28.6690)
+    // Fix default marker icon broken paths (common Leaflet CDN issue)
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+
+    // Coordinates for Beylikdüzü OSB Birlik Sanayi Sitesi
     const factoryCoords = [41.0125, 28.6690];
     const map = L.map('map', {
-      scrollWheelZoom: false // Disable scroll zoom for better page navigation scroll
+      scrollWheelZoom: false,
+      zoomControl: true,
+      attributionControl: true
     }).setView(factoryCoords, 15);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -688,14 +707,26 @@ function initInteractiveMap() {
     }).addTo(map);
 
     const markerPopupText = currentLang === 'tr'
-      ? '<strong>Özperçin Cıvata Sanayi A.Ş.</strong><br>Birlik Sanayi Sitesi 1. Cd. No:24/13'
-      : '<strong>Özperçin Cıvata Sanayi A.Ş.</strong><br>Birlik Industrial Site 1. St. No:24/13';
+      ? '<strong>Özperçin Cıvata Sanayi A.Ş.</strong><br>Birlik Sanayi Sitesi 1. Cd. No:24/13<br>Beylikdüzü / İstanbul'
+      : '<strong>Özperçin Cıvata Sanayi A.Ş.</strong><br>Birlik Industrial Site 1. St. No:24/13<br>Beylikdüzü / Istanbul';
 
     L.marker(factoryCoords).addTo(map)
       .bindPopup(markerPopupText)
       .openPopup();
+
+    // Force map to recalculate size (fixes tile rendering in some browsers)
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
+
   } catch (error) {
     console.error('Error loading interactive map:', error);
+    // Fallback: show Google Maps link
+    mapEl.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-secondary);border-radius:24px;flex-direction:column;gap:1rem;">
+        <p style="color:var(--text-secondary);">Harita yüklenemedi.</p>
+        <a href="https://maps.google.com/?q=Birlik+Sanayi+Sitesi+Beylikduzu+Istanbul" target="_blank" rel="noopener" class="btn btn-secondary">Google Maps'te Aç</a>
+      </div>`;
   }
 }
 
