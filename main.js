@@ -623,7 +623,7 @@ function initSecureForm() {
     })
     .then(async (response) => {
       let json = await response.json();
-      if (response.status == 200) {
+      if (response.status == 200 && json.success) {
         // Success
         localStorage.setItem('contact_form_last_submit', Date.now().toString());
         showFormStatus('success', currentLang === 'tr'
@@ -632,10 +632,11 @@ function initSecureForm() {
         form.reset();
       } else {
         // API Error
-        console.log(response);
+        console.error('Web3Forms response error:', json);
+        const errorDetail = json.message ? ` (${json.message})` : '';
         showFormStatus('error', currentLang === 'tr'
-          ? 'Mesaj gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
-          : 'An error occurred while sending the message. Please try again later.');
+          ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen daha sonra tekrar deneyin.'}`
+          : `An error occurred while sending the message: ${json.message || 'Please try again later.'}`);
       }
     })
     .catch(error => {
