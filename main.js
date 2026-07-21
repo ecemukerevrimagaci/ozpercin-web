@@ -600,23 +600,54 @@ function initSecureForm() {
 
     if (!isValid) return;
 
-    // 5. Asynchronous Simulated submit
+    // 5. Send data to Web3Forms API
     const submitBtn = document.getElementById('form-submit-btn');
     submitBtn.disabled = true;
     submitBtn.textContent = currentLang === 'tr' ? 'Gönderiliyor...' : 'Sending...';
 
-    setTimeout(() => {
-      // Save submission time for rate limit
-      localStorage.setItem('contact_form_last_submit', Date.now().toString());
+    const formData = {
+      access_key: 'ae4a014a-e4f1-4dfe-9cb9-6c99fefbdd0d',
+      subject: `Web Sitesi İletişim Formu: ${subjectVal}`,
+      from_name: nameVal,
+      email: emailVal,
+      message: messageVal
+    };
 
-      showFormStatus('success', currentLang === 'tr'
-        ? 'Mesajınız başarıyla ve güvenli bir şekilde iletildi. Teşekkür ederiz.'
-        : 'Your message has been sent successfully and securely. Thank you.');
-
-      form.reset();
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(async (response) => {
+      let json = await response.json();
+      if (response.status == 200) {
+        // Success
+        localStorage.setItem('contact_form_last_submit', Date.now().toString());
+        showFormStatus('success', currentLang === 'tr'
+          ? 'Mesajınız başarıyla iletildi. En kısa sürede size dönüş yapacağız.'
+          : 'Your message has been sent successfully. We will get back to you shortly.');
+        form.reset();
+      } else {
+        // API Error
+        console.log(response);
+        showFormStatus('error', currentLang === 'tr'
+          ? 'Mesaj gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+          : 'An error occurred while sending the message. Please try again later.');
+      }
+    })
+    .catch(error => {
+      console.log(error);
+      showFormStatus('error', currentLang === 'tr'
+        ? 'Bağlantı hatası oluştu. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.'
+        : 'Connection error occurred. Please check your internet connection and try again.');
+    })
+    .finally(() => {
       submitBtn.disabled = false;
       submitBtn.textContent = currentLang === 'tr' ? 'Mesajı Gönder' : 'Send Message';
-    }, 1200);
+    });
   });
 }
 
