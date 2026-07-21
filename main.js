@@ -606,14 +606,15 @@ function initSecureForm() {
     submitBtn.textContent = currentLang === 'tr' ? 'Gönderiliyor...' : 'Sending...';
 
     const formData = {
-      access_key: 'ae4a014a-e4f1-4dfe-9cb9-6c99fefbdd0d',
-      subject: `Web Sitesi İletişim Formu: ${subjectVal}`,
-      from_name: nameVal,
+      name: nameVal,
       email: emailVal,
+      _subject: `Özperçin Web İletişim Formu: ${subjectVal}`,
+      _captcha: 'false',
+      _template: 'table',
       message: messageVal
     };
 
-    fetch('https://api.web3forms.com/submit', {
+    fetch('https://formsubmit.co/ajax/info@ozpercin.com', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -623,7 +624,7 @@ function initSecureForm() {
     })
     .then(async (response) => {
       let json = await response.json();
-      if (response.status == 200 && json.success) {
+      if (json.success === 'true' || json.success === true) {
         // Success
         localStorage.setItem('contact_form_last_submit', Date.now().toString());
         showFormStatus('success', currentLang === 'tr'
@@ -631,16 +632,15 @@ function initSecureForm() {
           : 'Your message has been sent successfully. We will get back to you shortly.');
         form.reset();
       } else {
-        // API Error
-        console.error('Web3Forms response error:', json);
-        const errorDetail = json.message ? ` (${json.message})` : '';
+        // FormSubmit response error (e.g. activation pending)
+        console.error('FormSubmit response status:', json);
         showFormStatus('error', currentLang === 'tr'
-          ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen daha sonra tekrar deneyin.'}`
-          : `An error occurred while sending the message: ${json.message || 'Please try again later.'}`);
+          ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen aktivasyon e-postasını kontrol edin.'}`
+          : `An error occurred while sending the message: ${json.message || 'Please check your activation email.'}`);
       }
     })
     .catch(error => {
-      console.log(error);
+      console.error('FormSubmit error:', error);
       showFormStatus('error', currentLang === 'tr'
         ? 'Bağlantı hatası oluştu. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.'
         : 'Connection error occurred. Please check your internet connection and try again.');
