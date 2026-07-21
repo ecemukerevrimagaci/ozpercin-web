@@ -526,20 +526,12 @@ function initCatalogTabs() {
   });
 }
 
-// Secure Form Submission (Input validation, honeypot, XSS sanitization, Rate-Limiting)
-function initSecureForm() {
+function initContactForm() {
   const form = document.getElementById('secure-contact-form');
   if (!form) return;
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-
-    // 1. Honeypot check (anti-spam bot)
-    const honeypot = document.getElementById('honeypot').value;
-    if (honeypot) {
-      console.warn('Spam submission detected by honeypot.');
-      return;
-    }
 
     // Sanitize and Validate inputs
     const fullnameInput = document.getElementById('fullname');
@@ -553,7 +545,6 @@ function initSecureForm() {
 
     // Anti-spam Honeypot check
     if (honeypotInput && honeypotInput.value !== '') {
-      e.preventDefault();
       console.warn('Bot submission blocked via honeypot.');
       return;
     }
@@ -593,26 +584,22 @@ function initSecureForm() {
       isValid = false;
     }
 
-    if (!isValid) {
-      e.preventDefault();
-      return;
-    }
+    if (!isValid) return;
 
-    // Rate limiting check
-    const lastSubmit = localStorage.getItem('contact_form_last_submit');
-    if (lastSubmit && (Date.now() - parseInt(lastSubmit, 10)) < 10000) {
-      e.preventDefault();
-      showFormStatus('error', currentLang === 'tr'
-        ? 'Lütfen yeni bir mesaj göndermeden önce 10 saniye bekleyin.'
-        : 'Please wait 10 seconds before submitting another message.');
-      return;
-    }
+    // Build pre-filled mailto URL targeting info@ozpercin.com
+    const fullSubject = `Özperçin Web Formu: ${subjectVal}`;
+    const fullBody = `Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\nKonu: ${subjectVal}\n\nMesaj:\n${messageVal}`;
+    const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(fullSubject)}&body=${encodeURIComponent(fullBody)}`;
 
-    const submitBtn = document.getElementById('form-submit-btn');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = currentLang === 'tr' ? 'Gönderiliyor...' : 'Sending...';
-    }
+    // Open user's default email program
+    window.location.href = mailtoUrl;
+
+    const successMsg = currentLang === 'tr'
+      ? `<strong>✅ Mesajınız E-Posta Uygulamanıza Aktarıldı:</strong><br>E-posta uygulamanız açılmıştır. Lütfen <strong>"Gönder"</strong> butonuna basarak mesajı <code>info@ozpercin.com</code> adresine iletin.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programında Yeniden Aç</a>`
+      : `<strong>✅ Message Prepared:</strong><br>Your mail app has opened. Please click <strong>Send</strong> to deliver your message to <code>info@ozpercin.com</code>.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Open Mail App Again</a>`;
+
+    showFormStatus('success', successMsg, true);
+    form.reset();
   });
 }
 
