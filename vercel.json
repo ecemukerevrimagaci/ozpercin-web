@@ -1,5 +1,12 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/hakkimizda", "destination": "/hakkimizda.html" },
+    { "source": "/urunler", "destination": "/urunler.html" },
+    { "source": "/uretim", "destination": "/uretim.html" },
+    { "source": "/kalite", "destination": "/kalite.html" },
+    { "source": "/iletisim", "destination": "/iletisim.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
