@@ -1,41 +1,43 @@
 {
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/hakkimizda", "destination": "/hakkimizda.html" },
-    { "source": "/urunler", "destination": "/urunler.html" },
-    { "source": "/uretim", "destination": "/uretim.html" },
-    { "source": "/kalite", "destination": "/kalite.html" },
-    { "source": "/iletisim", "destination": "/iletisim.html" }
-  ],
-  "headers": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com https://unpkg.com https://*.tile.openstreetmap.org; script-src 'self' 'unsafe-inline' https://unpkg.com; connect-src 'self' https://*.tile.openstreetmap.org https://nominatim.openstreetmap.org; frame-ancestors 'none';"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Strict-Transport-Security",
-          "value": "max-age=63072000; includeSubDomains; preload"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "geolocation=(), microphone=(), camera=()"
-        }
-      ]
+      "src": "api/contact.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/contact",
+      "dest": "/api/contact.js"
+    },
+    {
+      "src": "/hakkimizda",
+      "dest": "/hakkimizda.html"
+    },
+    {
+      "src": "/urunler",
+      "dest": "/urunler.html"
+    },
+    {
+      "src": "/uretim",
+      "dest": "/uretim.html"
+    },
+    {
+      "src": "/kalite",
+      "dest": "/kalite.html"
+    },
+    {
+      "src": "/iletisim",
+      "dest": "/iletisim.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ]
 }
