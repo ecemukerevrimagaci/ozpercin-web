@@ -634,16 +634,26 @@ function initSecureForm() {
       } else {
         // FormSubmit response error (e.g. activation pending)
         console.error('FormSubmit response status:', json);
-        showFormStatus('error', currentLang === 'tr'
-          ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen aktivasyon e-postasını kontrol edin.'}`
-          : `An error occurred while sending the message: ${json.message || 'Please check your activation email.'}`);
+        const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
+        
+        const isActivationPending = json.message && json.message.toLowerCase().includes('activation');
+        const statusMsg = isActivationPending
+          ? (currentLang === 'tr'
+              ? `<strong>⚠️ Aktivasyon Bekleniyor:</strong> Form servisinin mesajları <code>info@ozpercin.com</code> adresinize iletebilmesi için ilk onay gerekiyor. Lütfen Roundcube (Webmail) kutunuzdaki veya Spam/Junk klasöründeki <strong>FormSubmit Activate</strong> e-postasını onaylayın.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Doğrudan Gönder</a>`
+              : `<strong>⚠️ Activation Required:</strong> FormSubmit requires one-time approval for <code>info@ozpercin.com</code>. Please check your inbox or Spam folder.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`)
+          : (currentLang === 'tr'
+              ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen tekrar deneyin.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönder</a>`
+              : `An error occurred: ${json.message || 'Please try again.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`);
+
+        showFormStatus('error', statusMsg, true);
       }
     })
     .catch(error => {
       console.error('FormSubmit error:', error);
+      const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
       showFormStatus('error', currentLang === 'tr'
-        ? 'Bağlantı hatası oluştu. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.'
-        : 'Connection error occurred. Please check your internet connection and try again.');
+        ? `Bağlantı hatası oluştu.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Doğrudan Gönder</a>`
+        : `Connection error occurred.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`, true);
     })
     .finally(() => {
       submitBtn.disabled = false;
@@ -685,12 +695,16 @@ function resetErrors(inputs) {
   }
 }
 
-function showFormStatus(type, msg) {
+function showFormStatus(type, msg, isHtml = false) {
   const statusBox = document.getElementById('form-status-box');
   if (!statusBox) return;
 
   statusBox.className = `form-status ${type}`;
-  statusBox.textContent = msg;
+  if (isHtml) {
+    statusBox.innerHTML = msg;
+  } else {
+    statusBox.textContent = msg;
+  }
   statusBox.style.display = 'block';
 }
 
