@@ -1,15 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
   "cleanUrls": true,
-  "functions": {
-    "api/*.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/hakkimizda", "destination": "/hakkimizda.html" },
     { "source": "/urunler", "destination": "/urunler.html" },
     { "source": "/uretim", "destination": "/uretim.html" },
