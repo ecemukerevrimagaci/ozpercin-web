@@ -15,6 +15,11 @@ export default defineConfig({
         production: resolve(__dirname, 'uretim.html'),
         quality: resolve(__dirname, 'kalite.html'),
         contact: resolve(__dirname, 'iletisim.html'),
+      },
+      output: {
+        entryFileNames: 'assets/[name]-[hash]-v101.js',
+        chunkFileNames: 'assets/[name]-[hash]-v101.js',
+        assetFileNames: 'assets/[name]-[hash]-v101.[ext]'
       }
     }
   }
