@@ -17,9 +17,9 @@ export default defineConfig({
         contact: resolve(__dirname, 'iletisim.html'),
       },
       output: {
-        entryFileNames: 'assets/[name]-[hash]-v101.js',
-        chunkFileNames: 'assets/[name]-[hash]-v101.js',
-        assetFileNames: 'assets/[name]-[hash]-v101.[ext]'
+        entryFileNames: 'assets/[name]-[hash]-v102.js',
+        chunkFileNames: 'assets/[name]-[hash]-v102.js',
+        assetFileNames: 'assets/[name]-[hash]-v102.[ext]'
       }
     }
   }

@@ -586,20 +586,57 @@ function initContactForm() {
 
     if (!isValid) return;
 
-    // Build pre-filled mailto URL targeting info@ozpercin.com
-    const fullSubject = `Özperçin Web Formu: ${subjectVal}`;
-    const fullBody = `Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\nKonu: ${subjectVal}\n\nMesaj:\n${messageVal}`;
-    const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(fullSubject)}&body=${encodeURIComponent(fullBody)}`;
+    const submitBtn = document.getElementById('form-submit-btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = currentLang === 'tr' ? 'Gönderiliyor...' : 'Sending...';
+    }
 
-    // Open user's default email program
-    window.location.href = mailtoUrl;
+    const formData = {
+      access_key: 'ae4a014a-e4f1-4dfe-9cb9-6c99fefbdd0d',
+      subject: `Özperçin Web İletişim Formu: ${subjectVal}`,
+      from_name: nameVal,
+      email: emailVal,
+      message: messageVal
+    };
 
-    const successMsg = currentLang === 'tr'
-      ? `<strong>✅ Mesajınız E-Posta Uygulamanıza Aktarıldı:</strong><br>E-posta uygulamanız açılmıştır. Lütfen <strong>"Gönder"</strong> butonuna basarak mesajı <code>info@ozpercin.com</code> adresine iletin.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programında Yeniden Aç</a>`
-      : `<strong>✅ Message Prepared:</strong><br>Your mail app has opened. Please click <strong>Send</strong> to deliver your message to <code>info@ozpercin.com</code>.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Open Mail App Again</a>`;
-
-    showFormStatus('success', successMsg, true);
-    form.reset();
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(async (response) => {
+      let json = await response.json();
+      if (json.success) {
+        localStorage.setItem('contact_form_last_submit', Date.now().toString());
+        showFormStatus('success', currentLang === 'tr'
+          ? 'Mesajınız başarıyla iletildi. En kısa sürede size dönüş yapacağız.'
+          : 'Your message has been sent successfully. We will get back to you shortly.');
+        form.reset();
+      } else {
+        console.error('Web3Forms Response:', json);
+        const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
+        showFormStatus('error', currentLang === 'tr'
+          ? `Mesaj gönderilirken sorun oluştu: ${json.message || 'Lütfen tekrar deneyin.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönderin</a>`
+          : `An error occurred: ${json.message || 'Please try again.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`, true);
+      }
+    })
+    .catch(error => {
+      console.error('Contact submit error:', error);
+      const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
+      showFormStatus('error', currentLang === 'tr'
+        ? `Bağlantı hatası oluştu.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönderin</a>`
+        : `Connection error occurred.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`, true);
+    })
+    .finally(() => {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = currentLang === 'tr' ? 'Mesajı Gönder' : 'Send Message';
+      }
+    });
   });
 }
 
