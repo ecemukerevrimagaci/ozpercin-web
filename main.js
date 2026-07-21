@@ -541,38 +541,33 @@ function initSecureForm() {
       return;
     }
 
-    // 2. Rate Limiting (1 request per 30 seconds max)
-    const lastSubmit = localStorage.getItem('contact_form_last_submit');
-    const now = Date.now();
-    if (lastSubmit && (now - parseInt(lastSubmit, 10) < 30000)) {
-      showFormStatus('error', currentLang === 'tr' 
-        ? 'Lütfen yeni bir mesaj göndermeden önce 30 saniye bekleyin.' 
-        : 'Please wait 30 seconds before sending another message.');
-      return;
-    }
-
-    // Input elements
-    const nameInput = document.getElementById('fullname');
+    // Sanitize and Validate inputs
+    const fullnameInput = document.getElementById('fullname');
     const emailInput = document.getElementById('email');
     const subjectInput = document.getElementById('subject');
     const messageInput = document.getElementById('message');
+    const honeypotInput = document.getElementById('honeypot');
 
-    // Clean prior error status
-    resetErrors([nameInput, emailInput, subjectInput, messageInput]);
+    const inputs = [fullnameInput, emailInput, subjectInput, messageInput];
+    resetErrors(inputs);
+
+    // Anti-spam Honeypot check
+    if (honeypotInput && honeypotInput.value !== '') {
+      e.preventDefault();
+      console.warn('Bot submission blocked via honeypot.');
+      return;
+    }
 
     let isValid = true;
-
-    // 3. Sanitization (Defense against XSS)
-    const nameVal = sanitize(nameInput.value.trim());
+    const nameVal = sanitize(fullnameInput.value.trim());
     const emailVal = sanitize(emailInput.value.trim());
     const subjectVal = sanitize(subjectInput.value.trim());
     const messageVal = sanitize(messageInput.value.trim());
 
-    // 4. Strict Validation
-    if (!nameVal || nameVal.length < 3) {
-      showInputError(nameInput, currentLang === 'tr' 
-        ? 'Lütfen geçerli bir ad soyad girin (En az 3 karakter).' 
-        : 'Please enter a valid name (At least 3 characters).');
+    if (!nameVal || nameVal.length < 2) {
+      showInputError(fullnameInput, currentLang === 'tr'
+        ? 'Lütfen adınızı ve soyadınızı girin.'
+        : 'Please enter your full name.');
       isValid = false;
     }
 
@@ -584,70 +579,40 @@ function initSecureForm() {
       isValid = false;
     }
 
-    if (!subjectVal || subjectVal.length < 5) {
+    if (!subjectVal || subjectVal.length < 3) {
       showInputError(subjectInput, currentLang === 'tr'
-        ? 'Lütfen geçerli bir konu girin (En az 5 karakter).'
-        : 'Please enter a valid subject (At least 5 characters).');
+        ? 'Lütfen geçerli bir konu girin (En az 3 karakter).'
+        : 'Please enter a valid subject.');
       isValid = false;
     }
 
-    if (!messageVal || messageVal.length < 10) {
+    if (!messageVal || messageVal.length < 5) {
       showInputError(messageInput, currentLang === 'tr'
-        ? 'Lütfen detaylı bir mesaj yazın (En az 10 karakter).'
-        : 'Please enter a detailed message (At least 10 characters).');
+        ? 'Lütfen mesajınızı yazın.'
+        : 'Please enter your message.');
       isValid = false;
     }
 
-    if (!isValid) return;
+    if (!isValid) {
+      e.preventDefault();
+      return;
+    }
 
-    // 5. Send data to Web3Forms API
-    const submitBtn = document.getElementById('form-submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.textContent = currentLang === 'tr' ? 'Gönderiliyor...' : 'Sending...';
-
-    const formData = {
-      name: nameVal,
-      email: emailVal,
-      subject: subjectVal,
-      message: messageVal
-    };
-
-    fetch('/api/contact', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    })
-    .then(async (response) => {
-      let json = await response.json();
-      if (response.ok && json.success) {
-        // Success
-        localStorage.setItem('contact_form_last_submit', Date.now().toString());
-        showFormStatus('success', currentLang === 'tr'
-          ? 'Mesajınız başarıyla iletildi. En kısa sürede size dönüş yapacağız.'
-          : 'Your message has been sent successfully. We will get back to you shortly.');
-        form.reset();
-      } else {
-        console.error('Contact API Error:', json);
-        const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
-        showFormStatus('error', currentLang === 'tr'
-          ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen tekrar deneyin.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönder</a>`
-          : `An error occurred: ${json.message || 'Please try again.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`, true);
-      }
-    })
-    .catch(error => {
-      console.error('Contact API Fetch Error:', error);
-      const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
+    // Rate limiting check
+    const lastSubmit = localStorage.getItem('contact_form_last_submit');
+    if (lastSubmit && (Date.now() - parseInt(lastSubmit, 10)) < 10000) {
+      e.preventDefault();
       showFormStatus('error', currentLang === 'tr'
-        ? `Bağlantı hatası oluştu.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönder</a>`
-        : `Connection error occurred.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`, true);
-    })
-    .finally(() => {
-      submitBtn.disabled = false;
-      submitBtn.textContent = currentLang === 'tr' ? 'Mesajı Gönder' : 'Send Message';
-    });
+        ? 'Lütfen yeni bir mesaj göndermeden önce 10 saniye bekleyin.'
+        : 'Please wait 10 seconds before submitting another message.');
+      return;
+    }
+
+    const submitBtn = document.getElementById('form-submit-btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = currentLang === 'tr' ? 'Gönderiliyor...' : 'Sending...';
+    }
   });
 }
 
