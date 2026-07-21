@@ -323,6 +323,11 @@ const translations = {
     'contact.formSubject': 'Subject *',
     'contact.formMessage': 'Your Message *',
     'contact.formSubmit': 'Send Message',
+    'contact.quickTitle': 'Fast Contact',
+    'contact.quickDesc': 'For all orders, price quotes, and technical inquiries, you can reach our factory directly via phone, email, or WhatsApp.',
+    'contact.callDirect': 'Call Direct: +90 212 876 11 00',
+    'contact.emailDirect': 'Email: info@ozpercin.com',
+    'contact.whatsappDirect': 'WhatsApp Line',
     'contact.mapTitle': 'Map Location',
     'contact.mapDesc': 'Our factory is located inside the Beylikdüzü Organized Industrial Zone.',
     
