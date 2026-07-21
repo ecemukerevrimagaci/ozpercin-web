@@ -1,7 +1,8 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/contact", "destination": "/api/contact" },
     { "source": "/hakkimizda", "destination": "/hakkimizda.html" },
     { "source": "/urunler", "destination": "/urunler.html" },
     { "source": "/uretim", "destination": "/uretim.html" },
