@@ -608,13 +608,11 @@ function initSecureForm() {
     const formData = {
       name: nameVal,
       email: emailVal,
-      _subject: `Özperçin Web İletişim Formu: ${subjectVal}`,
-      _captcha: 'false',
-      _template: 'table',
+      subject: subjectVal,
       message: messageVal
     };
 
-    fetch('https://formsubmit.co/ajax/info@ozpercin.com', {
+    fetch('/api/contact', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -624,7 +622,7 @@ function initSecureForm() {
     })
     .then(async (response) => {
       let json = await response.json();
-      if (json.success === 'true' || json.success === true) {
+      if (response.ok && json.success) {
         // Success
         localStorage.setItem('contact_form_last_submit', Date.now().toString());
         showFormStatus('success', currentLang === 'tr'
@@ -632,27 +630,18 @@ function initSecureForm() {
           : 'Your message has been sent successfully. We will get back to you shortly.');
         form.reset();
       } else {
-        // FormSubmit response error (e.g. activation pending)
-        console.error('FormSubmit response status:', json);
+        console.error('Contact API Error:', json);
         const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
-        
-        const isActivationPending = json.message && json.message.toLowerCase().includes('activation');
-        const statusMsg = isActivationPending
-          ? (currentLang === 'tr'
-              ? `<strong>⚠️ Aktivasyon Bekleniyor:</strong> Form servisinin mesajları <code>info@ozpercin.com</code> adresinize iletebilmesi için ilk onay gerekiyor. Lütfen Roundcube (Webmail) kutunuzdaki veya Spam/Junk klasöründeki <strong>FormSubmit Activate</strong> e-postasını onaylayın.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Doğrudan Gönder</a>`
-              : `<strong>⚠️ Activation Required:</strong> FormSubmit requires one-time approval for <code>info@ozpercin.com</code>. Please check your inbox or Spam folder.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`)
-          : (currentLang === 'tr'
-              ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen tekrar deneyin.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönder</a>`
-              : `An error occurred: ${json.message || 'Please try again.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`);
-
-        showFormStatus('error', statusMsg, true);
+        showFormStatus('error', currentLang === 'tr'
+          ? `Mesaj gönderilirken bir hata oluştu: ${json.message || 'Lütfen tekrar deneyin.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönder</a>`
+          : `An error occurred: ${json.message || 'Please try again.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`, true);
       }
     })
     .catch(error => {
-      console.error('FormSubmit error:', error);
+      console.error('Contact API Fetch Error:', error);
       const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
       showFormStatus('error', currentLang === 'tr'
-        ? `Bağlantı hatası oluştu.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Doğrudan Gönder</a>`
+        ? `Bağlantı hatası oluştu.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönder</a>`
         : `Connection error occurred.<br><br><a href="${mailtoUrl}" class="btn btn-secondary">Send via Mail App</a>`, true);
     })
     .finally(() => {
