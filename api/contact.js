@@ -1,3 +1,5 @@
+import nodemailer from 'nodemailer';
+
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,56 +28,48 @@ export default async function handler(req, res) {
 
     const emailSubject = `Özperçin Web İletişim Formu: ${subject}`;
     const emailBodyHtml = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; border: 1px solid #eee; border-radius: 8px;">
-        <h2 style="color: #0F172A; border-bottom: 2px solid #2563EB; padding-bottom: 8px;">Yeni Web İletişim Formu Mesajı</h2>
-        <p><strong>Gönderen Ad Soyad:</strong> ${escapeHtml(name)}</p>
-        <p><strong>E-Posta Adresi:</strong> <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p>
-        <p><strong>Konu:</strong> ${escapeHtml(subject)}</p>
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-        <p><strong>Mesaj:</strong></p>
-        <blockquote style="background: #f8fafc; padding: 12px 16px; border-left: 4px solid #2563EB; margin: 0; white-space: pre-wrap;">${escapeHtml(message)}</blockquote>
+      <div style="font-family: Arial, sans-serif; padding: 24px; color: #1E293B; max-width: 600px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF;">
+        <h2 style="color: #0F172A; border-bottom: 2px solid #2563EB; padding-bottom: 10px; margin-top: 0;">🔩 Yeni Web İletişim Formu Mesajı</h2>
+        <p style="margin: 8px 0;"><strong>Gönderen Ad Soyad:</strong> ${escapeHtml(name)}</p>
+        <p style="margin: 8px 0;"><strong>E-Posta Adresi:</strong> <a href="mailto:${escapeHtml(email)}" style="color: #2563EB;">${escapeHtml(email)}</a></p>
+        <p style="margin: 8px 0;"><strong>Konu:</strong> ${escapeHtml(subject)}</p>
+        <hr style="border: 0; border-top: 1px solid #E2E8F0; margin: 16px 0;">
+        <p style="margin: 8px 0;"><strong>Mesaj:</strong></p>
+        <div style="background: #F8FAFC; padding: 16px; border-left: 4px solid #2563EB; border-radius: 6px; white-space: pre-wrap; color: #334155;">${escapeHtml(message)}</div>
         <br>
-        <small style="color: #64748B;">Bu e-posta ozpercin.com web sitesi iletişim formundan otomatik olarak iletilmiştir.</small>
+        <small style="color: #94A3B8; display: block; margin-top: 12px;">Bu e-posta ozpercin.com web sitesi iletişim formundan otomatik olarak gönderilmiştir.</small>
       </div>
     `;
 
-    // Send via Resend API
-    const resendApiKey = process.env.RESEND_API_KEY || 're_3W1gR4aR_K8M2uYgB794hZ84w74w9X4w9'; // Fallback / environment key
-
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json'
+    const transporter = nodemailer.createTransport({
+      host: 'mail.ozpercin.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'info@ozpercin.com',
+        pass: 'OZP@2026@ozp'
       },
-      body: JSON.stringify({
-        from: 'Özperçin Web <onboarding@resend.dev>',
-        to: ['info@ozpercin.com'],
-        reply_to: email,
-        subject: emailSubject,
-        html: emailBodyHtml
-      })
+      tls: {
+        rejectUnauthorized: false
+      }
     });
 
-    const resendData = await resendResponse.json();
-
-    if (resendResponse.ok || resendData.id) {
-      return res.status(200).json({ success: true, message: 'Mesajınız başarıyla iletildi.' });
-    }
-
-    // Fallback: If Resend Key is not set or returns error, attempt fallback transport
-    console.error('Resend API Response Error:', resendData);
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Mesajınız alındı.', 
-      info: resendData 
+    const info = await transporter.sendMail({
+      from: '"Özperçin Web Formu" <info@ozpercin.com>',
+      to: 'info@ozpercin.com',
+      replyTo: email,
+      subject: emailSubject,
+      html: emailBodyHtml
     });
+
+    console.log('Contact form email sent successfully via SMTP:', info.messageId);
+    return res.status(200).json({ success: true, message: 'Mesajınız başarıyla iletildi.' });
 
   } catch (error) {
-    console.error('Serverless Contact Function Error:', error);
+    console.error('Serverless SMTP Contact Error:', error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Sunucu hatası oluştu. Lütfen tekrar deneyin.' 
+      message: 'E-posta gönderilirken sunucu hatası oluştu: ' + error.message 
     });
   }
 }
