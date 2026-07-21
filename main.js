@@ -593,14 +593,13 @@ function initContactForm() {
     }
 
     const formData = {
-      access_key: 'ae4a014a-e4f1-4dfe-9cb9-6c99fefbdd0d',
-      subject: `Özperçin Web İletişim Formu: ${subjectVal}`,
-      from_name: nameVal,
+      name: nameVal,
       email: emailVal,
+      subject: subjectVal,
       message: messageVal
     };
 
-    fetch('https://api.web3forms.com/submit', {
+    fetch('/api/contact', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -610,14 +609,14 @@ function initContactForm() {
     })
     .then(async (response) => {
       let json = await response.json();
-      if (json.success) {
+      if (response.ok && json.success) {
         localStorage.setItem('contact_form_last_submit', Date.now().toString());
         showFormStatus('success', currentLang === 'tr'
           ? 'Mesajınız başarıyla iletildi. En kısa sürede size dönüş yapacağız.'
           : 'Your message has been sent successfully. We will get back to you shortly.');
         form.reset();
       } else {
-        console.error('Web3Forms Response:', json);
+        console.error('SMTP API Response Error:', json);
         const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
         showFormStatus('error', currentLang === 'tr'
           ? `Mesaj gönderilirken sorun oluştu: ${json.message || 'Lütfen tekrar deneyin.'}<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönderin</a>`
@@ -625,7 +624,7 @@ function initContactForm() {
       }
     })
     .catch(error => {
-      console.error('Contact submit error:', error);
+      console.error('SMTP API Fetch Error:', error);
       const mailtoUrl = `mailto:info@ozpercin.com?subject=${encodeURIComponent(subjectVal)}&body=${encodeURIComponent(`Ad Soyad: ${nameVal}\nE-Posta: ${emailVal}\n\nMesaj:\n${messageVal}`)}`;
       showFormStatus('error', currentLang === 'tr'
         ? `Bağlantı hatası oluştu.<br><br><a href="${mailtoUrl}" class="btn btn-secondary" style="margin-top:0.5rem;display:inline-block;padding:0.5rem 1rem;font-size:0.9rem;">E-Posta Programınız ile Gönderin</a>`
