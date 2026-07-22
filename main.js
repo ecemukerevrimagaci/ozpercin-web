@@ -164,7 +164,9 @@ const translations = {
     
     // Footer & Generic
     'footer.desc': '1972\'den beri endüstriyel bağlantı elemanlarında güvenilir ve yüksek mukavemetli üretim ortağınız.',
-    'footer.quickLinks': 'Hızlı Bağlantılar'
+    'footer.quickLinks': 'Hızlı Bağlantılar',
+    'footer.contactTitle': 'İletişim Bilgileri',
+    'footer.address': 'Birlik Sanayi Sitesi 1. Cd. No:24/13 Beylikdüzü / İstanbul'
   },
   en: {
     'nav.home': 'Home',
@@ -332,7 +334,9 @@ const translations = {
     
     // Footer & Generic
     'footer.desc': 'Your reliable partner in industrial fasteners since 1972.',
-    'footer.quickLinks': 'Quick Links'
+    'footer.quickLinks': 'Quick Links',
+    'footer.contactTitle': 'Contact Information',
+    'footer.address': 'Birlik Industrial Site 1. St. No:24/13 Beylikduzu / Istanbul'
   }
 };
 
