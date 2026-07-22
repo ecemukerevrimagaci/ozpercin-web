@@ -364,8 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mobile menu toggle
   initMobileMenu();
 
-  // Form handling & security sanitization
-  initSecureForm();
+  // Form handling removed
 
   // Map loader (Leaflet)
   initInteractiveMap();
